@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro de Tarjeta</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      text-align: center;
+    }
+    .status {
+      font-size: 1.5rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>Procesando escaneo...</h2>
+  <div class="status" id="status">Espere un momento...</div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const tarjeta = params.get("tarjeta");
+    const entryID = "584117191";
+    const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSegzTtlrBLKD8WEcANXm5-T3uPcbjWF4yMM2ArSBonW31vMXg/formResponse";
+    const statusDiv = document.getElementById("status");
+
+    function yaRegistrada(tarjeta) {
+      const registradas = JSON.parse(localStorage.getItem("tarjetas_registradas") || "[]");
+      return registradas.includes(tarjeta);
+    }
+
+    function marcarComoRegistrada(tarjeta) {
+      const registradas = JSON.parse(localStorage.getItem("tarjetas_registradas") || "[]");
+      if (!registradas.includes(tarjeta)) {
+        registradas.push(tarjeta);
+        localStorage.setItem("tarjetas_registradas", JSON.stringify(registradas));
+      }
+    }
+
+    if (!tarjeta) {
+      statusDiv.innerText = "❌ Número de tarjeta no encontrado en el enlace.";
+    } else if (yaRegistrada(tarjeta)) {
+      statusDiv.innerText = `⚠️ La tarjeta N°${tarjeta} ya fue registrada.`;
+    } else {
+      const fullURL = `${formURL}?entry.${entryID}=${tarjeta}`;
+      fetch(fullURL, { method: "POST", mode: "no-cors" })
+        .then(() => {
+          marcarComoRegistrada(tarjeta);
+          statusDiv.innerText = `✅ Tarjeta N°${tarjeta} registrada correctamente.`;
+        })
+        .catch(() => {
+          statusDiv.innerText = `❌ Error al registrar la tarjeta N°${tarjeta}.`;
+        });
+    }
+  </script>
+</body>
+</html>
